@@ -1,11 +1,11 @@
 package am.api.routes
 
 import am.services.impl.UsersService
-import am.models.User
+import am.models._
 import am.utils.Helper
-import scala.util.{ Success => FutureSuccess }
-import scala.util.Failure
+import scala.util.{ Success, Failure }
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.StatusCodes.{ Success => HttpSuccess }
 import akka.http.scaladsl.model.StatusCodes._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import io.circe.generic.auto._
@@ -20,44 +20,54 @@ class UsersServiceRoute(usersService: UsersService) extends Helper {
   val route = pathPrefix("users") {
     pathEndOrSingleSlash {
       get {
-        onComplete(getUsers) { 
-          case FutureSuccess(Right(Nil)) => complete(errorResponse("Not found" :: Nil, NotFound))
-          case FutureSuccess(Right(users)) => complete(dataResponse(users.asJson, OK))
-          case FutureSuccess(Left(error)) => complete(errorResponse(error, InternalServerError))
-          case Failure(error) => complete(errorResponse(error.toString :: Nil, InternalServerError))
+        onComplete(getUsers) {
+          case Success(users) => users match {
+            case Nil => complete(errorResponse(s"Users $NOT_FOUND", NotFound))
+            case users => complete(dataResponse(users.asJson, OK))
+          }
+          case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
         }
       } ~
       (post & entity(as[Json])) { json =>
-        complete {
-          json.as[User] match {
-            case Right(user) => createUser(user) match {
-              case Right(createdUser) => dataResponse(createdUser.asJson, Created)
-              case Left(error) => errorResponse(error, InternalServerError)
-            }
-            case Left(error) => errorResponse(checkFields(json, requiredFields), BadRequest)
+        json.as[User] match {
+          case Right(user) => onComplete(createUser(user)) {
+            case Success(createdUser) => complete(dataResponse(createdUser.asJson, Created))
+            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
           }
+          case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
         }
       }
     } ~
     pathPrefix(Segment) { id =>
       pathEndOrSingleSlash {
-        (put & entity(as[Json])) { json =>
-          complete {
-            json.as[User] match {
-              case Right(user) => updateUser(id, user) match {
-                case Right(updatedUser) => dataResponse(updatedUser.asJson, Created)
-                case Left(error) => errorResponse(error, BadRequest)
-              }
-              case Left(error) => errorResponse(checkFields(json, requiredFields), BadRequest)
+        get {
+          onComplete(getUserById(id)) {
+            case Success(users) => users match {
+              case Some(user) => complete(dataResponse(user.asJson, OK))
+              case None => complete(errorResponse(s"User ID: $id $NOT_FOUND", NotFound))
             }
+            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+          }
+        } ~
+        (put & entity(as[Json])) { json =>
+          json.as[UserUpdate] match {
+            case Right(user) => onComplete (updateUser(id, user)) {
+              case Success(result) => result match {
+                case Some(user) => complete(dataResponse(user.asJson, OK))
+                case None => complete(errorResponse(s"User ID: $id $CANNOT_UPDATE", BadRequest))
+              }
+              case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+            }
+            case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
           }
         } ~
         delete {
-          complete {
-            deleteUser(id) match {
-              case Right(users) => dataResponse(users.asJson, OK)
-              case Left(error) => errorResponse(error, InternalServerError)
+          onComplete(deleteUser(id)) {
+            case Success(result) => result match {
+              case 1 => complete(dataResponse(s"User ID: $id $DELETED".asJson, OK))
+              case 0 => complete(errorResponse(s"User ID: $id $CANNOT_DELETE", BadRequest))
             }
+            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
           }
         }
       }

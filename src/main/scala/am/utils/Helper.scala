@@ -8,6 +8,13 @@ import io.circe.syntax._
 
 object Helper extends Helper
 trait Helper {
+
+  val DELETED = "has been deleted"
+  val NOT_FOUND = "not found"
+  val CANNOT_UPDATE = "cannot be updated"
+  val CANNOT_DELETE = "cannot be deleted"
+  val DATABSE_EXCEPTION = "Database exception has occured"
+
   def normalize(json: Json): Json = {
     val trimString: PartialFunction[Json, Json] = {
       case json => json.mapString(_.trim)
@@ -31,10 +38,16 @@ trait Helper {
     }
   }
 
+  def plainTextResponse(text: String): HttpResponse =
+    HttpResponse(entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, text))
+
   def dataResponse(json: Json, status: StatusCode): HttpResponse = {
     val dataResp = DataResponseFormat(json, status.intValue, status.defaultMessage)
     HttpResponse(status, entity = HttpEntity(ContentTypes.`application/json`, dataResp.asJson.toString))
   }
+
+  def errorResponse(error: String, status: StatusCode): HttpResponse =
+    errorResponse(error :: Nil, status)
 
   def errorResponse(errors: List[String], status: StatusCode): HttpResponse = {
     val errorResp = ErrorResponseFormat(errors, status.intValue, status.defaultMessage)

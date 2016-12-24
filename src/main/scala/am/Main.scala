@@ -16,6 +16,7 @@ object Main extends App with Config {
 
   val databaseService = new DatabaseService(jdbcUrl, dbUser, dbPassword)
   val usersService = new UsersService(databaseService)
+  usersService.createUserTable
   val httpService = new HttpService(usersService)
 
   Http().bindAndHandle(httpService.routes, httpHost, httpPort)

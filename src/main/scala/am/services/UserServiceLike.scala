@@ -1,13 +1,12 @@
 package am.services
 
 import scala.concurrent.Future
-import am.models.User
+import am.models._
 
 trait UsersServiceLike {
-  def getUsers(): Future[Either[List[String], List[User]]]
-  // def getUsers(): Either[List[String], List[User]]
-  def getUserById(id: String): Either[List[String], User]
-  def createUser(user: User): Either[List[String], User]
-  def updateUser(id: String, user: User): Either[List[String], User]
-  def deleteUser(id: String): Either[List[String], User]
+  def getUsers(): Future[Seq[User]]
+  def getUserById(id: String): Future[Option[User]]
+  def createUser(user: User): Future[User]
+  def updateUser(id: String, userUpdate: UserUpdate): Future[Option[User]]
+  def deleteUser(id: String): Future[Int]
 }
