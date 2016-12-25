@@ -1,6 +1,6 @@
 package am.api.routes
 
-import am.services.UsersService
+import am.services.BooksService
 import am.models._
 import am.utils.Helper
 import scala.util.{ Success, Failure }
@@ -12,26 +12,26 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import io.circe.Json
 
-class UsersServiceRoute(usersService: UsersService) extends Helper {
-  import usersService._
+class BooksServiceRoute(booksService: BooksService) extends Helper {
+  import booksService._
 
-  val requiredFields = List("id", "name", "team")
+  val requiredFields = List("id", "userID", "name")
 
-  val route = pathPrefix("users") {
+  val route = pathPrefix("books") {
     pathEndOrSingleSlash {
       get {
-        onComplete(getUsers) {
-          case Success(users) => users match {
-            case Nil => complete(errorResponse(s"Users $NOT_FOUND", NotFound))
-            case users => complete(dataResponse(users.asJson, OK))
+        onComplete(getBooks) {
+          case Success(books) => books match {
+            case Nil => complete(errorResponse(s"Books $NOT_FOUND", NotFound))
+            case books => complete(dataResponse(books.asJson, OK))
           }
           case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
         }
       } ~
       (post & entity(as[Json])) { json =>
-        json.as[User] match {
-          case Right(user) => onComplete(createUser(user)) {
-            case Success(createdUser) => complete(dataResponse(createdUser.asJson, Created))
+        json.as[Book] match {
+          case Right(book) => onComplete(createBook(book)) {
+            case Success(createdBook) => complete(dataResponse(createdBook.asJson, Created))
             case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
           }
           case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
@@ -41,20 +41,20 @@ class UsersServiceRoute(usersService: UsersService) extends Helper {
     pathPrefix(Segment) { id =>
       pathEndOrSingleSlash {
         get {
-          onComplete(getUserById(id)) {
-            case Success(users) => users match {
-              case Some(user) => complete(dataResponse(user.asJson, OK))
-              case None => complete(errorResponse(s"User ID: $id $NOT_FOUND", NotFound))
+          onComplete(getBookById(id)) {
+            case Success(books) => books match {
+              case Some(book) => complete(dataResponse(book.asJson, OK))
+              case None => complete(errorResponse(s"Book ID: $id $NOT_FOUND", NotFound))
             }
             case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
           }
         } ~
         (put & entity(as[Json])) { json =>
-          json.as[UserUpdate] match {
-            case Right(user) => onComplete (updateUser(id, user)) {
+          json.as[BookUpdate] match {
+            case Right(book) => onComplete (updateBook(id, book)) {
               case Success(result) => result match {
-                case Some(user) => complete(dataResponse(user.asJson, OK))
-                case None => complete(errorResponse(s"User ID: $id $CANNOT_UPDATE", BadRequest))
+                case Some(book) => complete(dataResponse(book.asJson, OK))
+                case None => complete(errorResponse(s"Book ID: $id $CANNOT_UPDATE", BadRequest))
               }
               case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
             }
@@ -62,10 +62,10 @@ class UsersServiceRoute(usersService: UsersService) extends Helper {
           }
         } ~
         delete {
-          onComplete(deleteUser(id)) {
+          onComplete(deleteBook(id)) {
             case Success(result) => result match {
-              case 1 => complete(dataResponse(s"User ID: $id $DELETED".asJson, OK))
-              case 0 => complete(errorResponse(s"User ID: $id $CANNOT_DELETE", BadRequest))
+              case 1 => complete(dataResponse(s"Book ID: $id $DELETED".asJson, OK))
+              case 0 => complete(errorResponse(s"Book ID: $id $CANNOT_DELETE", BadRequest))
             }
             case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
           }

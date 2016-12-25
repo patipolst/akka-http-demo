@@ -1,7 +1,8 @@
 package am
 
 import am.api.HttpService
-import am.services.impl._
+import am.services._
+import am.services.db._
 import am.utils.Config
 import akka.actor.ActorSystem
 import akka.event.Logging
@@ -16,8 +17,10 @@ object Main extends App with Config {
 
   val databaseService = new DatabaseService(jdbcUrl, dbUser, dbPassword)
   val usersService = new UsersService(databaseService)
-  usersService.createUserTable
-  val httpService = new HttpService(usersService)
+  val booksService = new BooksService(databaseService)
+  usersService.createUsersTable
+  booksService.createBooksTable
+  val httpService = new HttpService(usersService, booksService)
 
   Http().bindAndHandle(httpService.routes, httpHost, httpPort)
 }

@@ -1,17 +1,16 @@
-package am.services.impl
+package am.services
 
-import am.services.UsersServiceLike
 import am.models._
-import am.models.db.UserTable
-import am.utils.Helper
+import am.models.db.UsersTable
+import am.services.db._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class UsersService(val databaseService: DatabaseService) extends UsersServiceLike with UserTable with Helper {
+class UsersService(val databaseService: DatabaseService) extends UsersTable {
   import databaseService._
   import databaseService.driver.api._
 
-  def createUserTable: Unit = db.run(DBIO.seq((users.schema).create))
+  def createUsersTable: Unit = db.run(DBIO.seq((users.schema).create))
 
   def getUsers(): Future[Seq[User]] = db.run(users.result)
 

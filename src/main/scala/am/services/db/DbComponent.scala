@@ -1,8 +1,8 @@
-package am.services
+package am.services.db
 
 import slick.driver.JdbcProfile
 
-trait DatabaseServiceLike {
+trait DbComponent {
   val driver: JdbcProfile
   val db: driver.api.Database
 }
