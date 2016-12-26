@@ -4,15 +4,15 @@ import am.api.routes._
 import am.services._
 import akka.http.scaladsl.server.Directives._
 
-class HttpService(usersService: UsersService) {
+class HttpService(usersService: UsersService, addressesService: AddressesService) {
   val usersRouter = new UsersServiceRoute(usersService)
-  // val booksRouter = new BooksServiceRoute(booksService)
+  val addressesRouter = new AddressesServiceRoute(addressesService)
 
   val routes =
     PingRoute.route ~
     pathPrefix("api" / "v1") {
-      usersRouter.route
-      // ~booksRouter.route
+      usersRouter.route ~
+      addressesRouter.route
     }
 
 }

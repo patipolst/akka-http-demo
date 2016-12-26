@@ -15,17 +15,26 @@ import io.circe.Json
 class UsersServiceRoute(usersService: UsersService) extends Helper {
   import usersService._
 
-  val requiredFields = List("id", "name", "team")
+  val requiredFields = List("name", "age", "addressId")
 
   val route = pathPrefix("users") {
     pathEndOrSingleSlash {
-      get {
-        onComplete(getUsers) {
-          case Success(users) => users match {
-            case Nil => complete(errorResponse(s"Users $NOT_FOUND", NotFound))
-            case users => complete(dataResponse(users.asJson, OK))
+      (get & parameter("address".as[Boolean]?)) { queryAddress =>
+        queryAddress match {
+          case Some(true) => onComplete(getUsersWithAddress) {
+            case Success(users) => users match {
+              case Nil => complete(errorResponse(s"Users $NOT_FOUND", NotFound))
+              case users => complete(dataResponse(users.asJson, OK))
+            }
+            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
           }
-          case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+          case _ => onComplete(getUsers) {
+            case Success(users) => users match {
+              case Nil => complete(errorResponse(s"Users $NOT_FOUND", NotFound))
+              case users => complete(dataResponse(users.asJson, OK))
+            }
+            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+          }
         }
       } ~
       (post & entity(as[Json])) { json =>
@@ -40,13 +49,22 @@ class UsersServiceRoute(usersService: UsersService) extends Helper {
     } ~
     pathPrefix(Segment) { id =>
       pathEndOrSingleSlash {
-        get {
-          onComplete(getUserById(id)) {
-            case Success(users) => users match {
-              case Some(user) => complete(dataResponse(user.asJson, OK))
-              case None => complete(errorResponse(s"User ID: $id $NOT_FOUND", NotFound))
+        (get & parameter("address".as[Boolean]?)) { queryAddress =>
+          queryAddress match {
+            case Some(true) => onComplete(getUserWithAddressById(id)) {
+              case Success(users) => users match {
+                case Some(user) => complete(dataResponse(user.asJson, OK))
+                case None => complete(errorResponse(s"User ID: $id $NOT_FOUND", NotFound))
+              }
+              case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
             }
-            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+            case _ => onComplete(getUserById(id)) {
+              case Success(users) => users match {
+                case Some(user) => complete(dataResponse(user.asJson, OK))
+                case None => complete(errorResponse(s"User ID: $id $NOT_FOUND", NotFound))
+              }
+              case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+            }
           }
         } ~
         (put & entity(as[Json])) { json =>

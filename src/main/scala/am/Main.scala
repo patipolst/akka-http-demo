@@ -15,11 +15,14 @@ object Main extends App with Config {
   implicit val logger = Logging(system, getClass)
   implicit val materializer = ActorMaterializer()
 
+  val addressesService = new AddressesService(dbConfig)
   val usersService = new UsersService(dbConfig)
-  // val booksService = new BooksService(databaseService)
+
+  addressesService.createAddressesTable
+  Thread.sleep(1000)
   usersService.createUsersTable
-  // booksService.createBooksTable
-  val httpService = new HttpService(usersService)
+
+  val httpService = new HttpService(usersService, addressesService)
 
   Http().bindAndHandle(httpService.routes, httpHost, httpPort)
 }
