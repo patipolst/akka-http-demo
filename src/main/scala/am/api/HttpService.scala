@@ -9,8 +9,10 @@ class HttpService(usersService: UsersService) {
   // val booksRouter = new BooksServiceRoute(booksService)
 
   val routes =
+    PingRoute.route ~
     pathPrefix("api" / "v1") {
       usersRouter.route
       // ~booksRouter.route
     }
+
 }
