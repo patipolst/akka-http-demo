@@ -5,10 +5,11 @@ import am.models.db.UsersTable
 import am.services.db._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import slick.backend.DatabaseConfig
+import slick.driver.JdbcProfile
 
-class UsersService(val databaseService: DatabaseService) extends UsersTable {
-  import databaseService._
-  import databaseService.driver.api._
+class UsersService(val dbConfig: DatabaseConfig[JdbcProfile]) extends UsersTable with DbComponent {
+  import dbConfig.driver.api._
 
   def createUsersTable: Unit = db.run(DBIO.seq((users.schema).create))
 
