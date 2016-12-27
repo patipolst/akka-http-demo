@@ -2,7 +2,7 @@ package am.api.routes
 
 import am.services.UsersService
 import am.models._
-import am.utils.Helper
+import am.utils.{ Helper, Validator }
 import scala.util.{ Success, Failure }
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes.{ Success => HttpSuccess }
@@ -14,6 +14,7 @@ import io.circe.Json
 
 class UsersServiceRoute(usersService: UsersService) extends Helper {
   import usersService._
+  import Validator.userValidator
 
   val requiredFields = List("name", "age", "addressId")
 
@@ -38,10 +39,13 @@ class UsersServiceRoute(usersService: UsersService) extends Helper {
         }
       } ~
       (post & entity(as[Json])) { json =>
-        json.as[User] match {
-          case Right(user) => onComplete(createUser(user)) {
-            case Success(createdUser) => complete(dataResponse(createdUser.asJson, Created))
-            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+        normalize(json).as[User] match {
+          case Right(user) => validateModel(user) match {
+            case Nil => onComplete(createUser(user)) {
+              case Success(createdUser) => complete(dataResponse(createdUser.asJson, Created))
+              case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+            }
+            case errors => complete(errorResponse(errors, BadRequest))
           }
           case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
         }
@@ -68,7 +72,7 @@ class UsersServiceRoute(usersService: UsersService) extends Helper {
           }
         } ~
         (put & entity(as[Json])) { json =>
-          json.as[UserUpdate] match {
+          normalize(json).as[UserUpdate] match {
             case Right(user) => onComplete (updateUser(id, user)) {
               case Success(result) => result match {
                 case Some(user) => complete(dataResponse(user.asJson, OK))

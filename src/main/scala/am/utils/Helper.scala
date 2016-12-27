@@ -5,6 +5,8 @@ import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpResponse, Status
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
+import com.wix.accord._
+import com.wix.accord.Descriptions.{ AccessChain, Generic }
 
 object Helper extends Helper
 trait Helper {
@@ -14,6 +16,14 @@ trait Helper {
   val CANNOT_UPDATE = "cannot be updated"
   val CANNOT_DELETE = "cannot be deleted"
   val DATABSE_EXCEPTION = "Database exception has occured"
+
+  def checkFields(json: Json, reqFields: List[String]): List[String] = {
+    val jsonFields = json.hcursor.fields.getOrElse(Nil)
+    reqFields.diff(jsonFields).map(f => s"$f is required") match {
+      case Nil => "Malformed JSON" :: Nil
+      case errors => errors
+    }
+  }
 
   def normalize(json: Json): Json = {
     val trimString: PartialFunction[Json, Json] = {
@@ -30,13 +40,13 @@ trait Helper {
     )
   }
 
-  def checkFields(json: Json, reqFields: List[String]): List[String] = {
-    val jsonFields = json.hcursor.fields.getOrElse(Nil)
-    reqFields.diff(jsonFields).map(f => s"$f is required") match {
-      case Nil => "Malformed JSON" :: Nil
-      case errors => errors
+  def validateModel[T](model: T)(implicit validator: Validator[T]): List[String] =
+    validate(model) match {
+      case Success => Nil
+      case Failure(e) => e.map(x => x.description match {
+        case AccessChain(Generic(field)) => s"$field: ${x.constraint}"
+      }).toList
     }
-  }
 
   def plainTextResponse(text: String): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, text))

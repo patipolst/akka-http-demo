@@ -2,7 +2,7 @@ package am.api.routes
 
 import am.services.AddressesService
 import am.models._
-import am.utils.Helper
+import am.utils.{ Helper, Validator }
 import scala.util.{ Success, Failure }
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes.{ Success => HttpSuccess }
@@ -14,6 +14,7 @@ import io.circe.Json
 
 class AddressesServiceRoute(addressesService: AddressesService) extends Helper {
   import addressesService._
+  import Validator.addressValidator
 
   val requiredFields = List("street", "city")
 
@@ -29,10 +30,13 @@ class AddressesServiceRoute(addressesService: AddressesService) extends Helper {
         }
       } ~
       (post & entity(as[Json])) { json =>
-        json.as[Address] match {
-          case Right(address) => onComplete(createAddress(address)) {
-            case Success(createdAddress) => complete(dataResponse(createdAddress.asJson, Created))
-            case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+        normalize(json).as[Address] match {
+          case Right(address) => validateModel(address) match {
+            case Nil => onComplete(createAddress(address)) {
+              case Success(createdAddress) => complete(dataResponse(createdAddress.asJson, Created))
+              case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+            }
+            case errors => complete(errorResponse(errors, BadRequest))
           }
           case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
         }
@@ -50,7 +54,7 @@ class AddressesServiceRoute(addressesService: AddressesService) extends Helper {
           }
         } ~
         (put & entity(as[Json])) { json =>
-          json.as[AddressUpdate] match {
+          normalize(json).as[AddressUpdate] match {
             case Right(address) => onComplete (updateAddress(id, address)) {
               case Success(result) => result match {
                 case Some(address) => complete(dataResponse(address.asJson, OK))

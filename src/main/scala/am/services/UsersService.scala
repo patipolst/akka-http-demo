@@ -32,16 +32,14 @@ class UsersService(val dbConfig: DatabaseConfig[JdbcProfile]) extends UsersTable
       )
     )
   }
-  
+
   def dropUsersTable: Unit = db.run(DBIO.seq((users.schema).drop))
 
-  def getUsers(): Future[Seq[User]] = {
+  def getUsers(): Future[Seq[User]] =
     db.run(users.result)
-  }
 
-  def getUsersWithAddress(): Future[Seq[UserWithAddress]] = {
+  def getUsersWithAddress(): Future[Seq[UserWithAddress]] =
     db.run(users.withAddress.result).map(_.map(UserWithAddress.tupled))
-  }
 
   def getUserById(id: String): Future[Option[User]] =
     db.run(users.filter(_.id === id).result.headOption)
