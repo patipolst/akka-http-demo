@@ -18,9 +18,8 @@ object Main extends App with Config {
   val addressesService = new AddressesService(dbConfig)
   val usersService = new UsersService(dbConfig)
 
-  addressesService.createAddressesTable
-  Thread.sleep(1000)
-  usersService.createUsersTable
+  addressesService.initializeTable
+  usersService.initializeTable
 
   val httpService = new HttpService(usersService, addressesService)
 

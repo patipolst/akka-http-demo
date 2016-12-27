@@ -3,22 +3,36 @@ package am.services
 import am.models._
 import am.models.tables.UsersTable
 import am.services.db._
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
+import slick.jdbc.meta.MTable
 
 class UsersService(val dbConfig: DatabaseConfig[JdbcProfile]) extends UsersTable with DbComponent {
   import dbConfig.driver.api._
 
-  def createUsersTable: Unit = db.run(DBIO.seq((users.schema).create,
-    users ++= Seq(
-      User(None, "Boom", 22, "1"),
-      User(None, "Siggy", 40, "2"),
-      User(None, "Yok", 27, "2")
-    ))
-  )
+  def initializeTable: Unit = {
+    val tables = List(users)
+    val existingTables = db.run(MTable.getTables)
+    val init = existingTables.flatMap( existing => {
+      val names = existing.map(mt => mt.name.name)
+      val createIfNotExist = tables.filter( table =>
+        (!names.contains(table.baseTableRow.tableName))).map(_.schema.create)
+      db.run(DBIO.sequence(createIfNotExist))
+    })
+    Await.result(init, Duration.Inf)
 
+    db.run(
+      users ++= Seq(
+        User(None, "Boom", 22, "1"),
+        User(None, "Siggy", 40, "2"),
+        User(None, "Yok", 27, "2")
+      )
+    )
+  }
+  
   def dropUsersTable: Unit = db.run(DBIO.seq((users.schema).drop))
 
   def getUsers(): Future[Seq[User]] = {
