@@ -11,6 +11,8 @@ import com.wix.accord.Descriptions.{ AccessChain, Generic }
 object Helper extends Helper
 trait Helper {
 
+  val MISSING_TOKEN = "Missing JWT Token"
+  val INVALID_TOKEN = "Invalid JWT Token"
   val DELETED = "has been deleted"
   val NOT_FOUND = "not found"
   val CANNOT_UPDATE = "cannot be updated"
@@ -52,7 +54,7 @@ trait Helper {
     HttpResponse(entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, text))
 
   def dataResponse(json: Json, status: StatusCode): HttpResponse = {
-    val dataResp = DataResponseFormat(json, status.intValue, status.defaultMessage)
+    val dataResp = DataResponseFormat(json, status.intValue, status.reason)
     HttpResponse(status, entity = HttpEntity(ContentTypes.`application/json`, dataResp.asJson.toString))
   }
 
@@ -60,7 +62,7 @@ trait Helper {
     errorResponse(error :: Nil, status)
 
   def errorResponse(errors: List[String], status: StatusCode): HttpResponse = {
-    val errorResp = ErrorResponseFormat(errors, status.intValue, status.defaultMessage)
+    val errorResp = ErrorResponseFormat(errors, status.intValue, status.reason)
     HttpResponse(status, entity = HttpEntity(ContentTypes.`application/json`, errorResp.asJson.toString))
   }
 }
