@@ -13,6 +13,8 @@ import slick.jdbc.meta.MTable
 class AddressesService(val dbConfig: DatabaseConfig[JdbcProfile]) extends AddressesTable with DbComponent {
   import dbConfig.driver.api._
 
+  initializeTable
+
   def initializeTable: Unit = {
     val tables = List(addresses)
     val existingTables = db.run(MTable.getTables)

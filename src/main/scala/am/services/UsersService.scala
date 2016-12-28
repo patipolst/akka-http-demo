@@ -13,6 +13,8 @@ import slick.jdbc.meta.MTable
 class UsersService(val dbConfig: DatabaseConfig[JdbcProfile]) extends UsersTable with DbComponent {
   import dbConfig.driver.api._
 
+  initializeTable
+
   def initializeTable: Unit = {
     val tables = List(users)
     val existingTables = db.run(MTable.getTables)

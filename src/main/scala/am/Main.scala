@@ -14,10 +14,6 @@ object Main extends App with Config {
 
   val addressesService = new AddressesService(dbConfig)
   val usersService = new UsersService(dbConfig)
-
-  addressesService.initializeTable
-  usersService.initializeTable
-
   val httpService = new HttpService(usersService, addressesService)
 
   Http().bindAndHandle(httpService.routes, httpHost, httpPort)
