@@ -8,5 +8,5 @@ case class Address(
 
 case class AddressUpdate(street: Option[String] = None, city: Option[String] = None) {
   def merge(address: Address): Address =
-    address.copy(street = address.street, city = city.getOrElse(address.city))
+    address.copy(street = street.getOrElse(address.street), city = city.getOrElse(address.city))
 }

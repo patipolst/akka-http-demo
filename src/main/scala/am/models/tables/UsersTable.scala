@@ -14,7 +14,8 @@ trait UsersTable extends AddressesTable {
     def addressId = column[String]("address_id")
     def * = (id.?, name, age, addressId) <> (User.tupled, User.unapply)
 
-    def address = foreignKey("address", addressId, addresses)(_.id)
+    def address = foreignKey("address", addressId, addresses)(_.id, 
+      onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
   }
 
   val users = TableQuery[Users]
