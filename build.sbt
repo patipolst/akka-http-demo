@@ -21,3 +21,11 @@ libraryDependencies ++= {
     "org.scalatest"       %% "scalatest"            % "3.0.1"           % "test"
   )
 }
+
+coverageExcludedPackages := "am.Main;am.api.routes.PingRoute;am.utils.ValidationMethods"
+
+parallelExecution in Test := false
+
+enablePlugins(JavaAppPackaging)
+
+dockerExposedPorts := Seq(9000)
