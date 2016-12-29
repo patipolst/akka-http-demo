@@ -26,16 +26,19 @@ class UsersService(val dbConfig: DatabaseConfig[JdbcProfile]) extends UsersTable
     })
     Await.result(init, Duration.Inf)
 
-    db.run(
-      users ++= Seq(
-        User(None, "Boom", 22, "1"),
-        User(None, "Siggy", 40, "2"),
-        User(None, "Yok", 27, "2")
-      )
-    )
+    // db.run(
+    //   users ++= Seq(
+    //     User(None, "Boom", 22, "1"),
+    //     User(None, "Siggy", 40, "2"),
+    //     User(None, "Yok", 27, "2")
+    //   )
+    // )
   }
 
-  def dropUsersTable: Unit = db.run(DBIO.seq((users.schema).drop))
+  def dropTable: Unit = {
+    val drop = db.run(DBIO.seq((users.schema).drop))
+    Await.result(drop, Duration.Inf)
+  }
 
   def getUsers(): Future[Seq[User]] =
     db.run(users.result)

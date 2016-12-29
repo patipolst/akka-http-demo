@@ -26,16 +26,21 @@ class AddressesService(val dbConfig: DatabaseConfig[JdbcProfile]) extends Addres
     })
     Await.result(init, Duration.Inf)
 
-    db.run(
-      addresses ++= Seq(
-        Address(None, "Sukhumvit", "Bangkok"),
-        Address(None, "Nimman", "Chiangmai"),
-        Address(None, "Nimman", "Chiangmai")
-      )
-    )
+    // db.run(
+    //   addresses ++= Seq(
+    //     Address(None, "Sukhumvit", "Bangkok"),
+    //     Address(None, "Nimman", "Chiangmai"),
+    //     Address(None, "Nimman", "Chiangmai")
+    //   )
+    // )
   }
 
-  def dropTable: Unit = db.run(DBIO.seq((addresses.schema).drop))
+  def dropTable: Unit = {
+    val drop = db.run(DBIO.seq((addresses.schema).drop))
+    Await.result(drop, Duration.Inf)
+  }
+
+  def deleteAllRows: Future[Int] = db.run(addresses.delete)
 
   def getAddresses(): Future[Seq[Address]] = db.run(addresses.result)
 
