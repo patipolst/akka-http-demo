@@ -18,14 +18,13 @@ trait BaseServiceSpec extends WordSpec with Matchers with GivenWhenThen with Bef
   private val usersService = new UsersService(dbConfig)
   private val httpService = new HttpService(usersService, addressesService)
 
-  val baseAddressesUri = "/addresses"
-  val baseUsersUri = "/users"
+  val baseAddressesUri = "/api/v1/addresses"
+  val baseUsersUri = "/api/v1/users"
 
   private val jwtClaim = JwtClaim("""{"name": "test"}""")
   val jwtToken = JwtCirce.encode(jwtClaim, jwtKey, JwtAlgorithm.HS256)
 
-  val addressesRoute = httpService.addressesRouter.route
-  val usersRoute = httpService.usersRouter.route
+  val routes = httpService.routes
 
   before {
     addressesService.initializeTable

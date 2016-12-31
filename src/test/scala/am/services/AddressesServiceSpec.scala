@@ -20,7 +20,7 @@ class AddressesServiceSpec extends BaseServiceSpec {
       val uriPath = baseAddressesUri
 
       When("send the request")
-      Get(uriPath) ~> addressesRoute ~> check {
+      Get(uriPath) ~> routes ~> check {
         Then("return all addresses successfully")
         status should be (OK)
       }
@@ -31,7 +31,7 @@ class AddressesServiceSpec extends BaseServiceSpec {
       val uriPath = baseAddressesUri
 
       When("send the request")
-      Get(uriPath) ~> addressesRoute ~> check {
+      Get(uriPath) ~> routes ~> check {
         Then("return addresses not found successfully")
         status should be (NotFound)
       }
@@ -47,9 +47,41 @@ class AddressesServiceSpec extends BaseServiceSpec {
 
       When("send the request")
       Post(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
-      addressesRoute ~> check {
-        Then("return addresses not found successfully")
+      routes ~> check {
+        Then("create address successfully")
         status should be (Created)
+      }
+    }
+
+    "create new address with empty string in json" in new EmptyAddresses {
+      Given("uri path and json")
+      val uriPath = baseAddressesUri
+      val json = """{
+        "street": "Silom",
+        "city": ""
+      }"""
+
+      When("send the request")
+      Post(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("create address unsuccessfully")
+        status should be (BadRequest)
+      }
+    }
+
+    "create new address with malformed json" in new EmptyAddresses {
+      Given("uri path and json")
+      val uriPath = baseAddressesUri
+      val json = """{
+        "street": "Silom",
+        "city": 1
+      }"""
+
+      When("send the request")
+      Post(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("create address unsuccessfully")
+        status should be (BadRequest)
       }
     }
 
@@ -59,9 +91,21 @@ class AddressesServiceSpec extends BaseServiceSpec {
       val uriPath = s"${baseAddressesUri}/${testAddress.id.get}"
 
       When("send the request")
-      Get(uriPath) ~> addressesRoute ~> check {
+      Get(uriPath) ~> routes ~> check {
         Then("return address successfully")
         status should be (OK)
+      }
+    }
+
+    "retrieve none existing address by id" in new EmptyAddresses {
+      Given("uri path")
+      val testAddressId = 10
+      val uriPath = s"${baseAddressesUri}/${testAddressId}"
+
+      When("send the request")
+      Get(uriPath) ~> routes ~> check {
+        Then("return address unsuccessfully")
+        status should be (NotFound)
       }
     }
 
@@ -70,14 +114,45 @@ class AddressesServiceSpec extends BaseServiceSpec {
       val testAddress = testAddresses(0)
       val uriPath = s"${baseAddressesUri}/${testAddress.id.get}"
       val json = """{
-        "street": "Sukhumvit"
       }"""
 
       When("send the request")
       Put(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
-      addressesRoute ~> check {
+      routes ~> check {
         Then("update address successfully")
         status should be (OK)
+      }
+    }
+
+    "update none existing address by id and retrieve it" in new EmptyAddresses {
+      Given("uri path and json")
+      val testAddressId = 10
+      val uriPath = s"${baseAddressesUri}/${testAddressId}"
+      val json = """{
+        "city": "Pattaya"
+      }"""
+
+      When("send the request")
+      Put(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("update address unsuccessfully")
+        status should be (BadRequest)
+      }
+    }
+
+    "update address by id with malformed json and retrieve it" in new EmptyAddresses {
+      Given("uri path and json")
+      val testAddressId = 10
+      val uriPath = s"${baseAddressesUri}/${testAddressId}"
+      val json = """{
+        "street": 1
+      }"""
+
+      When("send the request")
+      Put(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("update address unsuccessfully")
+        status should be (BadRequest)
       }
     }
 
@@ -87,9 +162,21 @@ class AddressesServiceSpec extends BaseServiceSpec {
       val uriPath = s"${baseAddressesUri}/${testAddress.id.get}"
 
       When("send the request")
-      Delete(uriPath) ~> addressesRoute ~> check {
-        Then("update address successfully")
+      Delete(uriPath) ~> routes ~> check {
+        Then("delete address successfully")
         status should be (OK)
+      }
+    }
+
+    "delete none exsiting address" in new EmptyAddresses {
+      Given("uri path")
+      val testAddressId = 10
+      val uriPath = s"${baseAddressesUri}/${testAddressId}"
+
+      When("send the request")
+      Delete(uriPath) ~> routes ~> check {
+        Then("delete address unsuccessfully")
+        status should be (BadRequest)
       }
     }
 
