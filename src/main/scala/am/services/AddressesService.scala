@@ -40,8 +40,6 @@ class AddressesService(val dbConfig: DatabaseConfig[JdbcProfile]) extends Addres
     Await.result(drop, Duration.Inf)
   }
 
-  def deleteAllRows: Future[Int] = db.run(addresses.delete)
-
   def getAddresses(): Future[Seq[Address]] = db.run(addresses.result)
 
   def getAddressById(id: String): Future[Option[Address]] =

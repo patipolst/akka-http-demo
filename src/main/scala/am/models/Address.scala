@@ -6,7 +6,11 @@ case class Address(
   city: String
 )
 
-case class AddressUpdate(street: Option[String] = None, city: Option[String] = None) {
-  def merge(address: Address): Address =
-    address.copy(street = street.getOrElse(address.street), city = city.getOrElse(address.city))
+case class AddressUpdate(
+  street: Option[String] = None,
+  city: Option[String] = None
+) {
+  def merge(oldAddress: Address): Address =
+    oldAddress.copy(street = street.getOrElse(oldAddress.street),
+    city = city.getOrElse(oldAddress.city))
 }
