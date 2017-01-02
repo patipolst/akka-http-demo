@@ -22,7 +22,7 @@ libraryDependencies ++= {
   )
 }
 
-coverageExcludedPackages := "am.Main;am.api.routes.PingRoute;am.utils.ValidationMethods"
+coverageExcludedPackages := "am.Main;am.api.routes.PingRoute;am.utils.*"
 
 parallelExecution in Test := false
 
