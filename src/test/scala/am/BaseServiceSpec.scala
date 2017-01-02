@@ -8,11 +8,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import org.scalatest.{ BeforeAndAfter, WordSpec, GivenWhenThen, Matchers }
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import de.heikoseeberger.akkahttpcirce.CirceSupport
 import pdi.jwt.{JwtCirce, JwtClaim, JwtAlgorithm}
 
 trait BaseServiceSpec extends WordSpec with Matchers with GivenWhenThen with BeforeAndAfter
-  with ScalatestRouteTest with CirceSupport with Config {
+  with ScalatestRouteTest with Config {
 
   private val addressesService = new AddressesService(dbConfig)
   private val usersService = new UsersService(dbConfig)
@@ -32,6 +31,19 @@ trait BaseServiceSpec extends WordSpec with Matchers with GivenWhenThen with Bef
   }
 
   after {
+    usersService.dropTable
+    addressesService.dropTable
+  }
+
+  trait FullRows {
+    val testAddresses = createAddressesList(5)
+    val testUsers = createUsersList(5)
+  }
+
+  trait EmptyRow {
+  }
+
+  trait FailureCase {
     usersService.dropTable
     addressesService.dropTable
   }

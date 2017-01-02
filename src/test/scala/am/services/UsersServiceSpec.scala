@@ -6,17 +6,8 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
 
 class UsersServiceSpec extends BaseServiceSpec {
-
-  trait FullUsers {
-    val testAddresses = createAddressesList(5)
-    val testUsers = createUsersList(5)
-  }
-
-  trait EmptyUsers {
-  }
-
   "Users service" should {
-    "retrieve useres list" in new FullUsers {
+    "retrieve useres list" in new FullRows {
       Given("uri path")
       val uriPath = baseUsersUri
 
@@ -28,7 +19,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve empty useres list" in new EmptyUsers {
+    "retrieve empty useres list" in new EmptyRow {
       Given("uri path")
       val uriPath = baseUsersUri
 
@@ -40,7 +31,19 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve useres with addresses list" in new FullUsers {
+    "handle failure on retrieve useres list" in new FailureCase {
+      Given("uri path")
+      val uriPath = baseUsersUri
+
+      When("send the request")
+      Get(uriPath).withHeaders(RawHeader("Authorization", jwtToken)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
+      }
+    }
+
+    "retrieve useres with addresses list" in new FullRows {
       Given("uri path")
       val uriPath = s"${baseUsersUri}?address=true"
 
@@ -52,7 +55,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve empty useres with addresses list" in new EmptyUsers {
+    "retrieve empty useres with addresses list" in new EmptyRow {
       Given("uri path")
       val uriPath = s"${baseUsersUri}?address=true"
 
@@ -64,7 +67,19 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "create new user" in new FullUsers {
+    "handle failure on retrieve useres with addresses list" in new FailureCase {
+      Given("uri path")
+      val uriPath = s"${baseUsersUri}?address=true"
+
+      When("send the request")
+      Get(uriPath).withHeaders(RawHeader("Authorization", jwtToken)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
+      }
+    }
+
+    "create new user" in new FullRows {
       Given("uri path and json")
       val uriPath = baseUsersUri
       val json = """{
@@ -82,7 +97,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "create new user with empty string in json" in new EmptyUsers {
+    "create new user with empty string in json" in new EmptyRow {
       Given("uri path and json")
       val uriPath = baseUsersUri
       val json = """{
@@ -100,7 +115,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "create new user with malformed json" in new EmptyUsers {
+    "create new user with malformed json" in new EmptyRow {
       Given("uri path and json")
       val uriPath = baseUsersUri
       val json = """{
@@ -118,7 +133,25 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve user by id" in new FullUsers {
+    "handle failure on create new user" in new FailureCase {
+      Given("uri path and json")
+      val uriPath = baseUsersUri
+      val json = """{
+        "name": "Test",
+        "age": 19,
+        "addressId": "2"
+      }"""
+
+      When("send the request")
+      Post(uriPath).withHeaders(RawHeader("Authorization", jwtToken))
+      .withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
+      }
+    }
+
+    "retrieve user by id" in new FullRows {
       Given("uri path")
       val testUser = testUsers(0)
       val uriPath = s"${baseUsersUri}/${testUser.id.get}"
@@ -131,7 +164,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve none existing user by id" in new EmptyUsers {
+    "retrieve none existing user by id" in new EmptyRow {
       Given("uri path")
       val testUserId = 10
       val uriPath = s"${baseUsersUri}/${testUserId}"
@@ -144,7 +177,20 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve user with address by id" in new FullUsers {
+    "handle failure on retrieve user by id" in new FailureCase {
+      Given("uri path")
+      val testUserId = 10
+      val uriPath = s"${baseUsersUri}/${testUserId}"
+
+      When("send the request")
+      Get(uriPath).withHeaders(RawHeader("Authorization", jwtToken)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
+      }
+    }
+
+    "retrieve user with address by id" in new FullRows {
       Given("uri path")
       val testUser = testUsers(0)
       val uriPath = s"${baseUsersUri}/${testUser.id.get}?address=true"
@@ -157,7 +203,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "retrieve none existing user with address by id" in new EmptyUsers {
+    "retrieve none existing user with address by id" in new EmptyRow {
       Given("uri path")
       val testUserId = 10
       val uriPath = s"${baseUsersUri}/${testUserId}?address=true"
@@ -170,7 +216,20 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "update user by id and retrieve it" in new FullUsers {
+    "handle failure on retrieve user with address by id" in new FailureCase {
+      Given("uri path")
+      val testUserId = 10
+      val uriPath = s"${baseUsersUri}/${testUserId}?address=true"
+
+      When("send the request")
+      Get(uriPath).withHeaders(RawHeader("Authorization", jwtToken)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
+      }
+    }
+
+    "update user by id and retrieve it" in new FullRows {
       Given("uri path and json")
       val testUser = testUsers(0)
       val uriPath = s"${baseUsersUri}/${testUser.id.get}"
@@ -186,7 +245,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "update none existing user by id and retrieve it" in new EmptyUsers {
+    "update none existing user by id and retrieve it" in new EmptyRow {
       Given("uri path and json")
       val testUserId = 10
       val uriPath = s"${baseUsersUri}/${testUserId}"
@@ -203,12 +262,12 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "update user by id with malformed json and retrieve it" in new EmptyUsers {
+    "update user by id with malformed json and retrieve it" in new EmptyRow {
       Given("uri path and json")
       val testUserId = 10
       val uriPath = s"${baseUsersUri}/${testUserId}"
       val json = """{
-        "age": 55
+        "age": "sss"
       }"""
 
       When("send the request")
@@ -220,7 +279,23 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "delete user" in new FullUsers {
+    "handle failure on update user by id and retrieve it" in new FailureCase {
+      Given("uri path and json")
+      val testUserId = 10
+      val uriPath = s"${baseUsersUri}/${testUserId}"
+      val json = """{
+      }"""
+
+      When("send the request")
+      Put(uriPath).withHeaders(RawHeader("Authorization", jwtToken))
+      .withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
+      }
+    }
+
+    "delete user" in new FullRows {
       Given("uri path")
       val testUser = testUsers(0)
       val uriPath = s"${baseUsersUri}/${testUser.id.get}"
@@ -233,7 +308,7 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
-    "delete none exsiting user" in new EmptyUsers {
+    "delete none exsiting user" in new EmptyRow {
       Given("uri path")
       val testUserId = 10
       val uriPath = s"${baseUsersUri}/${testUserId}"
@@ -243,6 +318,19 @@ class UsersServiceSpec extends BaseServiceSpec {
       routes ~> check {
         Then("delete user unsuccessfully")
         status should be (BadRequest)
+      }
+    }
+
+    "handle failure on delete user" in new FailureCase {
+      Given("uri path")
+      val testUserId = 10
+      val uriPath = s"${baseUsersUri}/${testUserId}"
+
+      When("send the request")
+      Delete(uriPath).withHeaders(RawHeader("Authorization", jwtToken)) ~>
+      routes ~> check {
+        Then("respond server error successfully")
+        status should be (InternalServerError)
       }
     }
 
