@@ -36,7 +36,14 @@ class UsersService(val dbConfig: DatabaseConfig[JdbcProfile]) extends UsersTable
   }
 
   def dropTable: Unit = {
-    val drop = db.run(DBIO.seq((users.schema).drop))
+    val tables = List(users)
+    val existingTables = db.run(MTable.getTables)
+    val drop = existingTables.flatMap( existing => {
+      val names = existing.map(mt => mt.name.name)
+      val dropIfExists = tables.filter( table =>
+        (names.contains(table.baseTableRow.tableName))).map(_.schema.drop)
+      db.run(DBIO.sequence(dropIfExists))
+    })
     Await.result(drop, Duration.Inf)
   }
 
