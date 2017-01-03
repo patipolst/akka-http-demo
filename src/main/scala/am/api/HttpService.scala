@@ -13,6 +13,7 @@ class HttpService(usersService: UsersService, addressesService: AddressesService
 
   val routes = corsHandler {
     PingRoute.route ~
+    TokenRoute.route ~
     pathPrefix("api" / "v1") {
       usersRouter.route ~
       addressesRouter.route
