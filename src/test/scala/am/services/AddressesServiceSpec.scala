@@ -171,6 +171,22 @@ class AddressesServiceSpec extends BaseServiceSpec {
       }
     }
 
+    "update address by id with empty string and retrieve it" in new EmptyRow {
+      Given("uri path and json")
+      val testAddressId = 10
+      val uriPath = s"${baseAddressesUri}/${testAddressId}"
+      val json = """{
+        "city": ""
+      }"""
+
+      When("send the request")
+      Put(uriPath).withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("update address unsuccessfully")
+        status should be (BadRequest)
+      }
+    }
+
     "update address by id with malformed json and retrieve it" in new EmptyRow {
       Given("uri path and json")
       val testAddressId = 10

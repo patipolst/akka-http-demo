@@ -262,6 +262,23 @@ class UsersServiceSpec extends BaseServiceSpec {
       }
     }
 
+    "update user by id with empty string and retrieve it" in new EmptyRow {
+      Given("uri path and json")
+      val testUserId = 10
+      val uriPath = s"${baseUsersUri}/${testUserId}"
+      val json = """{
+        "name": ""
+      }"""
+
+      When("send the request")
+      Put(uriPath).withHeaders(RawHeader("Authorization", jwtToken))
+      .withEntity(HttpEntity(ContentTypes.`application/json`, json)) ~>
+      routes ~> check {
+        Then("update user unsuccessfully")
+        status should be (BadRequest)
+      }
+    }
+
     "update user by id with malformed json and retrieve it" in new EmptyRow {
       Given("uri path and json")
       val testUserId = 10
