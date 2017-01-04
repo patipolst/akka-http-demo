@@ -14,7 +14,7 @@ import io.circe.Json
 
 class AddressesServiceRoute(addressesService: AddressesService) extends Helper {
   import addressesService._
-  import Validator.addressValidator
+  import Validator.{ addressValidator, addressUpdateValidator }
 
   val requiredFields = List("street", "city")
 
@@ -55,12 +55,15 @@ class AddressesServiceRoute(addressesService: AddressesService) extends Helper {
         } ~
         (put & entity(as[Json])) { json =>
           normalize(json).as[AddressUpdate] match {
-            case Right(address) => onComplete (updateAddress(id, address)) {
-              case Success(result) => result match {
-                case Some(address) => complete(dataResponse(address.asJson, OK))
-                case None => complete(errorResponse(s"Address ID: $id $CANNOT_UPDATE", BadRequest))
+            case Right(addressUpdate) => validateModel(addressUpdate) match {
+              case Nil => onComplete (updateAddress(id, addressUpdate)) {
+                case Success(result) => result match {
+                  case Some(address) => complete(dataResponse(address.asJson, OK))
+                  case None => complete(errorResponse(s"Address ID: $id $CANNOT_UPDATE", BadRequest))
+                }
+                case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
               }
-              case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+              case errors => complete(errorResponse(errors, BadRequest))
             }
             case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
           }

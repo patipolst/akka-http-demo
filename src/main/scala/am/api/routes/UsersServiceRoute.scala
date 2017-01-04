@@ -15,7 +15,7 @@ import io.circe.Json
 
 class UsersServiceRoute(usersService: UsersService) extends SecuritySupport with Helper {
   import usersService._
-  import Validator.userValidator
+  import Validator.{ userValidator, userUpdateValidator }
 
   val requiredFields = List("name", "age", "addressId")
 
@@ -75,12 +75,15 @@ class UsersServiceRoute(usersService: UsersService) extends SecuritySupport with
           } ~
           (put & entity(as[Json])) { json =>
             normalize(json).as[UserUpdate] match {
-              case Right(user) => onComplete (updateUser(id, user)) {
-                case Success(result) => result match {
-                  case Some(user) => complete(dataResponse(user.asJson, OK))
-                  case None => complete(errorResponse(s"User ID: $id $CANNOT_UPDATE", BadRequest))
+              case Right(userUpdate) => validateModel(userUpdate) match {
+                case Nil => onComplete (updateUser(id, userUpdate)) {
+                  case Success(result) => result match {
+                    case Some(user) => complete(dataResponse(user.asJson, OK))
+                    case None => complete(errorResponse(s"User ID: $id $CANNOT_UPDATE", BadRequest))
+                  }
+                  case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
                 }
-                case Failure(error) => complete(errorResponse(DATABSE_EXCEPTION, InternalServerError))
+                case errors => complete(errorResponse(errors, BadRequest))
               }
               case Left(error) => complete(errorResponse(checkFields(json, requiredFields), BadRequest))
             }
