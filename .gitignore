@@ -1,3 +1,11 @@
+# Ensime specific
+.ensime
+.ensime_cache/
+.ensime_lucene/
+
+# txt
+*.txt
+
 ### Gitignore by Github
 *.class
 *.log
